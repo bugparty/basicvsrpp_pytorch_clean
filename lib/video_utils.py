@@ -148,7 +148,7 @@ def write_frames_to_video_file(frames: list[Image], output_path, fps: int | floa
     height = frames[0].shape[0]
     ffmpeg_output = [
         'nice', '-n', '19', 'ffmpeg', '-y',
-        '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{width}x{height}', '-r', f"{fps.numerator}/{fps.denominator}" if type(fps) == Fraction else str(fps),
+        '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{width}x{height}', '-r', f"{fps.numerator}/{fps.denominator}" if isinstance(fps, Fraction) else str(fps),
         '-i', '-', '-an', '-preset', preset
     ]
     if codec == 'x265':
@@ -173,7 +173,7 @@ def write_masks_to_video_file(frames: list[Mask], output_path, fps: int | float 
     height = frames[0].shape[0]
     ffmpeg_output = [
         'nice', '-n', '19', 'ffmpeg', '-y',
-        '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', f'{width}x{height}', '-r', f"{fps.numerator}/{fps.denominator}" if type(fps) == Fraction else str(fps),
+        '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', f'{width}x{height}', '-r', f"{fps.numerator}/{fps.denominator}" if isinstance(fps, Fraction) else str(fps),
         '-i', '-', '-an', '-vcodec', 'ffv1', '-level', '3', '-tag:v', 'ffv1',  output_path
     ]
 

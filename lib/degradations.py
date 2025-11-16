@@ -252,7 +252,7 @@ def random_bivariate_generalized_Gaussian(kernel_size,
     # add multiplicative noise
     if noise_range is not None:
         assert noise_range[0] < noise_range[1], 'Wrong noise range.'
-        noise = np.random.uniform(noise_range[0], noise_range[1], size=kernel.shape)
+        noise = rng_numpy.uniform(noise_range[0], noise_range[1], size=kernel.shape)
         kernel = kernel * noise
     kernel = kernel / np.sum(kernel)
     return kernel
@@ -492,13 +492,14 @@ def add_gaussian_noise_pt(img, sigma=10, gray_noise=0, clip=True, rounds=False):
 
 
 # ----------------------- Random Gaussian Noise ----------------------- #
-def random_generate_gaussian_noise(img, sigma_range=(0, 10), gray_prob=0):
-    sigma = np.random.uniform(sigma_range[0], sigma_range[1])
-    if np.random.uniform() < gray_prob:
+def random_generate_gaussian_noise(img, sigma_range=(0, 10), gray_prob=0, repeatable_random=False):
+    _, rng_numpy = random_utils.get_rngs(repeatable_random)
+    sigma = rng_numpy.uniform(sigma_range[0], sigma_range[1])
+    if rng_numpy.uniform() < gray_prob:
         gray_noise = True
     else:
         gray_noise = False
-    return generate_gaussian_noise(img, sigma, gray_noise)
+    return generate_gaussian_noise(img, sigma, gray_noise, repeatable_random)
 
 
 def random_add_gaussian_noise(img, sigma_range=(0, 1.0), gray_prob=0, clip=True, rounds=False):
@@ -535,24 +536,26 @@ def random_add_gaussian_noise_pt(img, sigma_range=(0, 1.0), gray_prob=0, clip=Tr
 # ----------------------- Poisson (Shot) Noise ----------------------- #
 
 
-def generate_poisson_noise(img, scale=1.0, gray_noise=False):
+def generate_poisson_noise(img, scale=1.0, gray_noise=False, repeatable_random=False):
     """Generate poisson noise.
     Ref: https://github.com/scikit-image/scikit-image/blob/main/skimage/util/noise.py#L37-L219
     Args:
         img (Numpy array): Input image, shape (h, w, c), range [0, 1], float32.
         scale (float): Noise scale. Default: 1.0.
         gray_noise (bool): Whether generate gray noise. Default: False.
+        repeatable_random (bool): Whether to use repeatable random. Default: False.
     Returns:
         (Numpy array): Returned noisy image, shape (h, w, c), range[0, 1],
             float32.
     """
+    _, rng_numpy = random_utils.get_rngs(repeatable_random)
     if gray_noise:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # round and clip image for counting vals correctly
     img = np.clip((img * 255.0).round(), 0, 255) / 255.
     vals = len(np.unique(img))
     vals = 2**np.ceil(np.log2(vals))
-    out = np.float32(np.random.poisson(img * vals) / float(vals))
+    out = np.float32(rng_numpy.poisson(img * vals) / float(vals))
     noise = out - img
     if gray_noise:
         noise = np.repeat(noise[:, :, np.newaxis], 3, axis=2)
@@ -652,13 +655,14 @@ def add_poisson_noise_pt(img, scale=1.0, clip=True, rounds=False, gray_noise=0):
 # ----------------------- Random Poisson (Shot) Noise ----------------------- #
 
 
-def random_generate_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0):
-    scale = np.random.uniform(scale_range[0], scale_range[1])
-    if np.random.uniform() < gray_prob:
+def random_generate_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0, repeatable_random=False):
+    _, rng_numpy = random_utils.get_rngs(repeatable_random)
+    scale = rng_numpy.uniform(scale_range[0], scale_range[1])
+    if rng_numpy.uniform() < gray_prob:
         gray_noise = True
     else:
         gray_noise = False
-    return generate_poisson_noise(img, scale, gray_noise)
+    return generate_poisson_noise(img, scale, gray_noise, repeatable_random)
 
 
 def random_add_poisson_noise(img, scale_range=(0, 1.0), gray_prob=0, clip=True, rounds=False):
@@ -715,16 +719,18 @@ def add_jpg_compression(img, quality=90):
     return img
 
 
-def random_add_jpg_compression(img, quality_range=(90, 100)):
+def random_add_jpg_compression(img, quality_range=(90, 100), repeatable_random=False):
     """Randomly add JPG compression artifacts.
     Args:
         img (Numpy array): Input image, shape (h, w, c), range [0, 1], float32.
         quality_range (tuple[float] | list[float]): JPG compression quality
             range. 0 for lowest quality, 100 for best quality.
             Default: (90, 100).
+        repeatable_random (bool): Whether to use repeatable random. Default: False.
     Returns:
         (Numpy array): Returned image after JPG, shape (h, w, c), range[0, 1],
             float32.
     """
-    quality = np.random.uniform(quality_range[0], quality_range[1])
+    _, rng_numpy = random_utils.get_rngs(repeatable_random)
+    quality = rng_numpy.uniform(quality_range[0], quality_range[1])
     return add_jpg_compression(img, quality)
