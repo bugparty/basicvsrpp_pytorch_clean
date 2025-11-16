@@ -32,9 +32,6 @@ env/
 *~
 
 # Checkpoints and models
-*.pth
-*.pt
-*.ckpt
 experiments/
 work_dirs/
 
