@@ -7,8 +7,10 @@ opencv-python>=4.8.0
 # MMEngine (轻量级的训练框架，比 mmcv 简单很多)
 mmengine>=0.10.0
 
-# Image processing
+# Image and video processing
 Pillow>=10.0.0
+av>=10.0.0  # PyAV for video processing
+scipy>=1.10.0  # For scientific computing
 
 # Optional dependencies
 # 如果需要使用某些高级功能，可能还需要：

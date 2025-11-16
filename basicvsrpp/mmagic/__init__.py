@@ -4,7 +4,7 @@
 
 from mmengine import DefaultScope
 
-SCOPE = 'lada.basicvsrpp.mmagic'
+SCOPE = 'basicvsrpp.mmagic'
 
 def register_all_modules():
     from .base_edit_model import BaseEditModel
