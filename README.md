@@ -13,13 +13,19 @@
 │   ├── deformconv.py
 │   ├── inference.py
 │   └── mosaic_video_dataset.py
-└── lib/                 # 辅助工具库
-    ├── image_utils.py
-    ├── random_utils.py
-    ├── transforms.py
-    ├── mosaic_utils.py
-    ├── degradations.py
-    └── ...
+├── lib/                 # 辅助工具库
+│   ├── image_utils.py
+│   ├── random_utils.py
+│   ├── transforms.py
+│   ├── mosaic_utils.py
+│   ├── degradations.py
+│   └── ...
+├── demo/                # 演示脚本
+│   ├── restoration_video_demo.py  # 视频修复 demo
+│   └── README.md
+└── tests/               # 测试文件
+    ├── test_imports.py
+    └── test_basic.py
 ```
 
 ## 主要特性
@@ -29,7 +35,29 @@
 - **GAN 版本**: 包含 BasicVSR++ GAN 实现用于视频超分辨率
 - **推理接口**: 提供简单的推理接口
 
-## 使用示例
+## 快速开始
+
+### 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 使用 Demo 进行视频修复
+
+最简单的方式是使用提供的 demo 脚本：
+
+```bash
+# 视频输入 → 视频输出
+python demo/restoration_video_demo.py input.mp4 output.mp4 checkpoint.pth
+
+# 图像序列输入 → 图像序列输出
+python demo/restoration_video_demo.py input_frames/ output_frames/ checkpoint.pth
+```
+
+详细使用说明请查看 [demo/README.md](demo/README.md)
+
+### 编程接口
 
 ```python
 from basicvsrpp.inference import load_model, inference, get_default_gan_inference_config
@@ -40,7 +68,7 @@ config = get_default_gan_inference_config()
 model = load_model(config, "path/to/checkpoint.pth", device="cuda:0")
 
 # 推理
-# video 是一个包含多帧图像的列表 (numpy arrays)
+# video 是一个包含多帧图像的列表 (numpy arrays, BGR format)
 result = inference(model, video, device="cuda:0")
 ```
 
