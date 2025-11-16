@@ -54,4 +54,20 @@ class ModulatedDeformConv2d(nn.Module):
             self.conv_offset.bias.data.zero_()
 
     def forward(self, x, offset, mask):
-        pass
+        """Forward function for ModulatedDeformConv2d.
+
+        Args:
+            x (Tensor): Input feature, shape (n, c_in, h, w).
+            offset (Tensor): Offset for deformable convolution, shape
+                (n, deform_groups*2*kernel_h*kernel_w, h, w).
+            mask (Tensor): Mask for deformable convolution, shape
+                (n, deform_groups*kernel_h*kernel_w, h, w).
+
+        Returns:
+            Tensor: Output feature, shape (n, c_out, h_out, w_out).
+        """
+        import torchvision
+        return torchvision.ops.deform_conv2d(
+            x, offset, self.weight, self.bias,
+            self.stride, self.padding,
+            self.dilation, mask)
