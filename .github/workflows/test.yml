@@ -56,7 +56,7 @@ jobs:
 
     - name: Run basic unit tests
       run: |
-        python tests/test_basic.py || echo "Basic tests need dependencies"
+        python tests/test_basic.py
         python tests/test_imports.py
 
   test-inference:
