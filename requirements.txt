@@ -1,0 +1,16 @@
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+
+# MMEngine (轻量级的训练框架，比 mmcv 简单很多)
+mmengine>=0.10.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Optional dependencies
+# 如果需要使用某些高级功能，可能还需要：
+# timm  # for some vision transformers
+# einops  # for tensor operations
