@@ -77,30 +77,6 @@ jobs:
         pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         pip install -r requirements.txt
 
-    - name: Test inference imports
+    - name: Test inference functionality
       run: |
-        python -c '
-from basicvsrpp.inference import load_model, inference, get_default_gan_inference_config
-from basicvsrpp import register_all_modules
-import torch
-import numpy as np
-
-register_all_modules()
-config = get_default_gan_inference_config()
-print("Inference config created successfully")
-print(f"Model type: {config[\"type\"]}")
-'
-
-    - name: Test model building
-      run: |
-        python -c '
-from basicvsrpp.inference import get_default_gan_inference_config
-from basicvsrpp import register_all_modules
-from basicvsrpp.mmagic.registry import MODELS
-
-register_all_modules()
-config = get_default_gan_inference_config()
-model = MODELS.build(config)
-model.eval()
-print(f"Model built successfully: {type(model).__name__}")
-'
+        python tests/test_inference.py
