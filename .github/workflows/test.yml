@@ -1,25 +1,23 @@
-name: Test BasicVSR++ Clean
+name: Training Tests
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ main, master, claude/* ]
   pull_request:
-    branches: [ "**" ]
+    branches: [ main, master ]
 
 jobs:
-  test:
+  test-training:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -27,17 +25,58 @@ jobs:
         pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         pip install -r requirements.txt
 
-    - name: Test imports
+    - name: Generate test dataset
       run: |
-        python tests/test_imports.py
+        python tests/generate_test_data.py
 
-    - name: Test basic functionality
+    - name: Test training script imports
+      run: |
+        python -c "from tools.train import main; print('Import successful')"
+
+    - name: Run minimal training test (CPU, 2 iterations)
+      run: |
+        python tools/train.py configs/test_ci.py \
+          --cfg-options train_cfg.max_iters=2 \
+          default_hooks.checkpoint.interval=1 \
+          default_hooks.logger.interval=1
+
+    - name: Check training outputs
+      run: |
+        ls -la work_dirs/test_ci/
+        test -f work_dirs/test_ci/iter_1.pth || exit 1
+        test -f work_dirs/test_ci/iter_2.pth || exit 1
+        echo "Training checkpoints created successfully"
+
+    - name: Test resume training
+      run: |
+        python tools/train.py configs/test_ci.py \
+          --resume work_dirs/test_ci/iter_2.pth \
+          --cfg-options train_cfg.max_iters=3 \
+          default_hooks.checkpoint.interval=1
+
+    - name: Run basic unit tests
       run: |
         python tests/test_basic.py
+        python tests/test_imports.py
 
-    - name: Check code syntax
+  test-inference:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
       run: |
-        python -m py_compile basicvsrpp/__init__.py
-        python -m py_compile basicvsrpp/basicvsrpp_gan.py
-        python -m py_compile basicvsrpp/inference.py
-        python -m py_compile basicvsrpp/deformconv.py
+        python -m pip install --upgrade pip
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+        pip install -r requirements.txt
+
+    - name: Test inference functionality
+      run: |
+        python tests/test_inference.py

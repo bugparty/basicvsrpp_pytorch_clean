@@ -300,7 +300,7 @@ class DataSample(BaseDataElement):
             values = [getattr(data, k) for data in data_samples]
             # 3. check type consistent
             value_type = type(values[0])
-            assert all([type(val) == value_type for val in values])
+            assert all([isinstance(val, value_type) for val in values])
 
             # 4. stack
             if isinstance(values[0], torch.Tensor):

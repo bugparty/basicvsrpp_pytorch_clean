@@ -34,11 +34,11 @@ def get_default_gan_inference_config() -> dict:
 
 def load_model(config: str | dict | None, checkpoint_path, device):
     register_all_modules()
-    if device and type(device) == str:
+    if device and isinstance(device, str):
         device = torch.device(device)
-    if type(config) == str:
+    if isinstance(config, str):
         config = Config.fromfile(config).model
-    elif type(config) == dict:
+    elif isinstance(config, dict):
         pass
     else:
         raise Exception("unsupported value for 'config', Must be either a file path to a config file or a dict definition of the model")
@@ -53,7 +53,7 @@ def load_model(config: str | dict | None, checkpoint_path, device):
 def inference(model, video: list, device, max_frames=-1):
     input_frame_count = len(video)
     input_frame_shape = video[0].shape
-    if device and type(device) == str:
+    if device and isinstance(device, str):
         device = torch.device(device)
     with torch.no_grad():
         result = []

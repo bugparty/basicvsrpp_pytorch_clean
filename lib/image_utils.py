@@ -162,24 +162,24 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     return result
 
 def resize(img: Image, size: int|tuple[int, int], interpolation=cv2.INTER_LINEAR):
-    if type(size) == int:
+    if isinstance(size, int):
         h, w = img.shape[:2]
         if max(w, h) == size:
             return img
         if w >= h:
             scale_factor = size / w
-            new_h = size
-            new_w = math.ceil(h * scale_factor) if scale_factor < 1.0 else math.floor(h * scale_factor)
+            new_w = size
+            new_h = math.ceil(h * scale_factor) if scale_factor < 1.0 else math.floor(h * scale_factor)
         else:
             scale_factor = size / h
-            new_w = size
-            new_h = math.ceil(w * scale_factor) if scale_factor < 1.0 else math.floor(w * scale_factor)
+            new_h = size
+            new_w = math.ceil(w * scale_factor) if scale_factor < 1.0 else math.floor(w * scale_factor)
     else:
         if img.shape[:2] == size:
             return img
         new_h, new_w = size
     resized_img = cv2.resize(img, (new_w, new_h), interpolation=interpolation)
-    assert size == max(resized_img.shape[:2]) if type(size) == int else size == resized_img.shape[:2]
+    assert size == max(resized_img.shape[:2]) if isinstance(size, int) else size == resized_img.shape[:2]
     return resized_img
 
 def resize_simple(img: Image, size: int, interpolation=cv2.INTER_LINEAR):
