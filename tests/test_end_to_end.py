@@ -30,10 +30,11 @@ def test_model_forward():
     model.eval()
 
     # Create synthetic input (B, T, C, H, W)
-    # Use small resolution for faster testing
+    # NOTE: Input must be at least 256x256 because model downsamples by 4x
+    # and requires downsampled size to be at least 64x64
     batch_size = 1
     num_frames = 4
-    height, width = 64, 64
+    height, width = 256, 256
 
     # Create random input tensor
     input_tensor = torch.randn(batch_size, num_frames, 3, height, width)
@@ -65,8 +66,9 @@ def test_inference_with_numpy_images():
     model.eval()
 
     # Create synthetic video frames (list of numpy arrays)
+    # NOTE: Input must be at least 256x256
     num_frames = 4
-    height, width = 64, 64
+    height, width = 256, 256
     video = [
         np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
         for _ in range(num_frames)
@@ -97,8 +99,9 @@ def test_inference_with_batching():
     model.eval()
 
     # Create synthetic video with more frames
+    # NOTE: Input must be at least 256x256
     num_frames = 10
-    height, width = 64, 64
+    height, width = 256, 256
     video = [
         np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
         for _ in range(num_frames)
@@ -128,8 +131,9 @@ def test_inference_consistency():
     model.eval()
 
     # Create synthetic video
+    # NOTE: Input must be at least 256x256
     num_frames = 3
-    height, width = 64, 64
+    height, width = 256, 256
     video = [
         np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
         for _ in range(num_frames)
@@ -162,8 +166,8 @@ def test_different_input_sizes():
 
     device = torch.device('cpu')
 
-    # Test different sizes
-    test_sizes = [(64, 64), (80, 80), (64, 80)]
+    # Test different sizes (all must be at least 256x256)
+    test_sizes = [(256, 256), (256, 320), (320, 256)]
 
     for height, width in test_sizes:
         video = [
@@ -267,9 +271,10 @@ def test_basicvsr_plusplus_net():
     net.eval()
 
     # Create synthetic input (B, T, C, H, W)
+    # NOTE: Input must be at least 256x256
     batch_size = 1
     num_frames = 5
-    height, width = 64, 64
+    height, width = 256, 256
 
     lqs = torch.randn(batch_size, num_frames, 3, height, width)
 
