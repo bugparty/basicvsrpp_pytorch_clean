@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0 AND AGPL-3.0
 # Code vendored from: https://github.com/open-mmlab/mmagic
 
+from __future__ import annotations
+
+from typing import Optional, Tuple, Union, Dict, Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,12 +44,13 @@ class BasicVSRPlusPlusNet(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 mid_channels=64,
-                 num_blocks=7,
-                 max_residue_magnitude=10,
-                 spynet_pretrained=None):
-
+    def __init__(
+        self,
+        mid_channels: int = 64,
+        num_blocks: int = 7,
+        max_residue_magnitude: int = 10,
+        spynet_pretrained: Optional[str] = None
+    ) -> None:
         super().__init__()
         self.mid_channels = mid_channels
 
@@ -88,44 +93,44 @@ class BasicVSRPlusPlusNet(BaseModule):
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
-    def compute_flow(self, lqs):
+    def compute_flow(self, lqs: Tensor) -> Tuple[Tensor, Tensor]:
         """Compute optical flow using SPyNet for feature alignment.
 
         Args:
-            lqs (tensor): Input low quality (LQ) sequence with
-                shape (n, t, c, h, w).
+            lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
 
-        Return:
-            tuple(Tensor): Optical flow. 'flows_forward' corresponds to the
-                flows used for forward-time propagation (current to previous).
-                'flows_backward' corresponds to the flows used for
-                backward-time propagation (current to next).
+        Returns:
+            Tuple of (flows_forward, flows_backward) tensors.
+            - flows_forward: Flows for forward-time propagation (current to previous).
+            - flows_backward: Flows for backward-time propagation (current to next).
         """
-
         n, t, c, h, w = lqs.size()
         lqs_1 = lqs[:, :-1, :, :, :].reshape(-1, c, h, w)
         lqs_2 = lqs[:, 1:, :, :, :].reshape(-1, c, h, w)
 
         flows_backward = self.spynet(lqs_1, lqs_2).view(n, t - 1, 2, h, w)
-
         flows_forward = self.spynet(lqs_2, lqs_1).view(n, t - 1, 2, h, w)
 
         return flows_forward, flows_backward
 
-    def propagate(self, feats, flows, module_name):
+    def propagate(
+        self,
+        feats: Dict[str, list[Tensor]],
+        flows: Tensor,
+        module_name: str
+    ) -> Dict[str, list[Tensor]]:
         """Propagate the latent features throughout the sequence.
 
         Args:
-            feats dict(list[tensor]): Features from previous branches. Each
-                component is a list of tensors with shape (n, c, h, w).
-            flows (tensor): Optical flows with shape (n, t - 1, 2, h, w).
-            module_name (str): The name of the propagation branches. Can either
-                be 'backward_1', 'forward_1', 'backward_2', 'forward_2'.
+            feats: Features from previous branches. Each component is a list
+                of tensors with shape (n, c, h, w).
+            flows: Optical flows with shape (n, t - 1, 2, h, w).
+            module_name: The name of the propagation branches. Can be
+                'backward_1', 'forward_1', 'backward_2', or 'forward_2'.
 
-        Return:
-            dict(list[tensor]): A dictionary containing all the propagated
-                features. Each key in the dictionary corresponds to a
-                propagation branch, which is represented by a list of tensors.
+        Returns:
+            A dictionary containing all the propagated features. Each key
+            corresponds to a propagation branch (list of tensors).
         """
 
         n, t, _, h, w = flows.size()
@@ -186,16 +191,15 @@ class BasicVSRPlusPlusNet(BaseModule):
 
         return feats
 
-    def upsample(self, lqs, feats):
+    def upsample(self, lqs: Tensor, feats: Dict[str, list[Tensor]]) -> Tensor:
         """Compute the output image given the features.
 
         Args:
-            lqs (tensor): Input low quality (LQ) sequence with
-                shape (n, t, c, h, w).
-            feats (dict): The features from the propagation branches.
+            lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
+            feats: The features from the propagation branches.
 
         Returns:
-            Tensor: Output HR sequence with shape (n, t, c, h, w).
+            Output HR sequence with shape (n, t, c, 4h, 4w).
         """
 
         outputs = []
@@ -221,15 +225,14 @@ class BasicVSRPlusPlusNet(BaseModule):
 
         return torch.stack(outputs, dim=1)
 
-    def forward(self, lqs):
+    def forward(self, lqs: Tensor) -> Tensor:
         """Forward function for BasicVSR++.
 
         Args:
-            lqs (tensor): Input low quality (LQ) sequence with
-                shape (n, t, c, h, w).
+            lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
 
         Returns:
-            Tensor: Output HR sequence with shape (n, t, c, 4h, 4w).
+            Output HR sequence with shape (n, t, c, 4h, 4w).
         """
 
         n, t, c, h, w = lqs.size()
@@ -282,8 +285,8 @@ class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
             residue (Eq. 6 in paper). Default: 10.
     """
 
-    def __init__(self, *args, **kwargs):
-        self.max_residue_magnitude = kwargs.pop('max_residue_magnitude', 10)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.max_residue_magnitude: int = kwargs.pop('max_residue_magnitude', 10)
 
         super(SecondOrderDeformableAlignment, self).__init__(*args, **kwargs)
 
@@ -299,12 +302,22 @@ class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
 
         self.init_offset()
 
-    def init_offset(self):
+    def init_offset(self) -> None:
         """Init constant offset."""
         constant_init(self.conv_offset[-1], val=0, bias=0)
 
-    def forward(self, x, extra_feat, flow_1, flow_2):
-        """Forward function."""
+    def forward(self, x: Tensor, extra_feat: Tensor, flow_1: Tensor, flow_2: Tensor) -> Tensor:
+        """Forward function for second-order deformable alignment.
+
+        Args:
+            x: Input tensor of shape (N, C, H, W).
+            extra_feat: Extra features for alignment.
+            flow_1: First-order optical flow.
+            flow_2: Second-order optical flow.
+
+        Returns:
+            Aligned output tensor.
+        """
         extra_feat = torch.cat([extra_feat, flow_1, flow_2], dim=1)
         out = self.conv_offset(extra_feat)
         o1, o2, mask = torch.chunk(out, 3, dim=1)
@@ -380,7 +393,7 @@ class SPyNet(BaseModule):
         pretrained (str): path for pre-trained SPyNet. Default: None.
     """
 
-    def __init__(self, pretrained):
+    def __init__(self, pretrained: Optional[str]) -> None:
         super().__init__()
 
         self.basic_module = nn.ModuleList(
@@ -400,18 +413,18 @@ class SPyNet(BaseModule):
             'std',
             torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
-    def compute_flow(self, ref, supp):
+    def compute_flow(self, ref: Tensor, supp: Tensor) -> Tensor:
         """Compute flow from ref to supp.
 
         Note that in this function, the images are already resized to a
         multiple of 32.
 
         Args:
-            ref (Tensor): Reference image with shape of (n, 3, h, w).
-            supp (Tensor): Supporting image with shape of (n, 3, h, w).
+            ref: Reference image with shape of (n, 3, h, w).
+            supp: Supporting image with shape of (n, 3, h, w).
 
         Returns:
-            Tensor: Estimated optical flow: (n, 2, h, w).
+            Estimated optical flow: (n, 2, h, w).
         """
         n, _, h, w = ref.size()
 
@@ -460,17 +473,17 @@ class SPyNet(BaseModule):
 
         return flow
 
-    def forward(self, ref, supp):
+    def forward(self, ref: Tensor, supp: Tensor) -> Tensor:
         """Forward function of SPyNet.
 
         This function computes the optical flow from ref to supp.
 
         Args:
-            ref (Tensor): Reference image with shape of (n, 3, h, w).
-            supp (Tensor): Supporting image with shape of (n, 3, h, w).
+            ref: Reference image with shape of (n, 3, h, w).
+            supp: Supporting image with shape of (n, 3, h, w).
 
         Returns:
-            Tensor: Estimated optical flow: (n, 2, h, w).
+            Estimated optical flow: (n, 2, h, w).
         """
 
         # upsize to a multiple of 32

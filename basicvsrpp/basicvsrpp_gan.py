@@ -1,29 +1,34 @@
 # SPDX-FileCopyrightText: Lada Authors
 # SPDX-License-Identifier: AGPL-3.0
 
+from __future__ import annotations
+
+from typing import Any, Union, Tuple
+
+from torch import Tensor
+
 from basicvsrpp.mmagic.registry import MODELS
 from basicvsrpp.mmagic.basicvsr_plusplus_net import BasicVSRPlusPlusNet
 from basicvsrpp.mmagic.real_basicvsr import RealBasicVSR
 
+
 @MODELS.register_module()
 class BasicVSRPlusPlusGanNet(BasicVSRPlusPlusNet):
-    def __init__(self,
-                **kwargs):
+    """BasicVSR++ GAN Network variant with frozen SPyNet."""
 
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.spynet.requires_grad_(False)
 
-
-    def forward(self, lqs, return_lqs=False):
-        """Forward function for BasicVSR++.
+    def forward(self, lqs: Tensor, return_lqs: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+        """Forward function for BasicVSR++ GAN.
 
         Args:
-            lqs (tensor): Input low quality (LQ) sequence with
-                shape (n, t, c, h, w).
-            return_lqs (bool): Whether to return LQ sequence. Default: False.
+            lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
+            return_lqs: Whether to return LQ sequence. Default: False.
 
         Returns:
-            Tensor: Output HR sequence.
+            Output HR sequence, or tuple of (HR sequence, LQ sequence) if return_lqs is True.
         """
         outputs = super().forward(lqs)
 
@@ -62,18 +67,19 @@ class BasicVSRPlusPlusGan(RealBasicVSR):
             :class:`BaseDataPreprocessor`. Default: None.
     """
 
-    def __init__(self,
-                 generator,
-                 discriminator=None,
-                 gan_loss=None,
-                 pixel_loss=None,
-                 perceptual_loss=None,
-                 is_use_ema=False,
-                 train_cfg=None,
-                 test_cfg=None,
-                 init_cfg=None,
-                 data_preprocessor=None):
-
+    def __init__(
+        self,
+        generator: dict,
+        discriminator: dict = None,
+        gan_loss: dict = None,
+        pixel_loss: dict = None,
+        perceptual_loss: dict = None,
+        is_use_ema: bool = False,
+        train_cfg: dict = None,
+        test_cfg: dict = None,
+        init_cfg: dict = None,
+        data_preprocessor: dict = None
+    ) -> None:
         super().__init__(
             generator=generator,
             discriminator=discriminator,
@@ -89,8 +95,15 @@ class BasicVSRPlusPlusGan(RealBasicVSR):
             init_cfg=init_cfg,
             data_preprocessor=data_preprocessor)
 
+    def extract_gt_data(self, data_samples: Any) -> Tuple[Tensor, Tensor, Tensor]:
+        """Extract ground truth data from data samples.
 
-    def extract_gt_data(self, data_samples):
+        Args:
+            data_samples: Data samples containing ground truth images.
+
+        Returns:
+            Tuple of (gt_pixel, gt_percep, gt_gan) tensors for different loss computations.
+        """
         gt = data_samples.gt_img
         gt_pixel, gt_percep, gt_gan = gt.clone(), gt.clone(), gt.clone()
         n, t, c, h, w = gt_pixel.size()
