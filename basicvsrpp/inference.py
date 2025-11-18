@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, List
 from pathlib import Path
 
 import numpy as np
@@ -80,10 +80,10 @@ def load_model(
 
 def inference(
     model: nn.Module,
-    video: list[np.ndarray],
+    video: List[np.ndarray],
     device: Union[str, torch.device],
     max_frames: int = -1
-) -> list[np.ndarray]:
+) -> List[np.ndarray]:
     """Run inference on a video sequence.
 
     Args:

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union, Dict, Any
+from typing import Optional, Tuple, Union, Dict, Any, List
 
 import torch
 import torch.nn as nn
@@ -115,10 +115,10 @@ class BasicVSRPlusPlusNet(BaseModule):
 
     def propagate(
         self,
-        feats: Dict[str, list[Tensor]],
+        feats: Dict[str, List[Tensor]],
         flows: Tensor,
         module_name: str
-    ) -> Dict[str, list[Tensor]]:
+    ) -> Dict[str, List[Tensor]]:
         """Propagate the latent features throughout the sequence.
 
         Args:
@@ -191,7 +191,7 @@ class BasicVSRPlusPlusNet(BaseModule):
 
         return feats
 
-    def upsample(self, lqs: Tensor, feats: Dict[str, list[Tensor]]) -> Tensor:
+    def upsample(self, lqs: Tensor, feats: Dict[str, List[Tensor]]) -> Tensor:
         """Compute the output image given the features.
 
         Args:
