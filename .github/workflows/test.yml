@@ -44,11 +44,6 @@ jobs:
       run: |
         python tests/test_golden.py
 
-    - name: Check golden set catches typical refactor mistakes (one-off)
-      if: matrix.python-version == '3.11'
-      run: |
-        python tests/check_golden_sensitivity.py
-
     - name: Check code syntax
       run: |
         python -m py_compile basicvsrpp/__init__.py
