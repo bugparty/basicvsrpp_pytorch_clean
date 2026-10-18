@@ -27,7 +27,7 @@ from .registry import MODELS
 class BasicVSRPlusPlusNet(BaseModule):
     """BasicVSR++ network structure.
 
-    Support either x4 upsampling or same size output.
+    Output has the same spatial size as the input (restoration, not x4 SR).
 
     Paper:
         BasicVSR++: Improving Video Super-Resolution with Enhanced Propagation
@@ -199,7 +199,7 @@ class BasicVSRPlusPlusNet(BaseModule):
             feats: The features from the propagation branches.
 
         Returns:
-            Output HR sequence with shape (n, t, c, 4h, 4w).
+            Output sequence with shape (n, t, c, h, w).
         """
 
         outputs = []
@@ -232,7 +232,7 @@ class BasicVSRPlusPlusNet(BaseModule):
             lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
 
         Returns:
-            Output HR sequence with shape (n, t, c, 4h, 4w).
+            Output sequence with shape (n, t, c, h, w).
         """
 
         n, t, c, h, w = lqs.size()

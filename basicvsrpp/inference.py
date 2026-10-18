@@ -95,12 +95,10 @@ def inference(
             Default: -1.
 
     Returns:
-        List of output frames as numpy arrays (H*4, W*4, C) in BGR format, where
-        the resolution is 4x upsampled compared to input.
+        List of restored frames as numpy arrays with the same shape as the input.
 
     Raises:
-        AssertionError: If output frame count doesn't match input, or if upsampling
-            ratio is not 4x as expected.
+        AssertionError: If output frame count or shape doesn't match input.
     """
     input_frame_count = len(video)
     input_frame_shape = video[0].shape
@@ -128,15 +126,9 @@ def inference(
         output_frame_count = len(output)
         output_frame_shape = output[0].shape
 
-        # Verify output: same number of frames, 4x upsampled resolution
-        assert input_frame_count == output_frame_count, \
-            f"Frame count mismatch: expected {input_frame_count}, got {output_frame_count}"
-        assert output_frame_shape[0] == input_frame_shape[0] * 4, \
-            f"Height mismatch: expected {input_frame_shape[0] * 4}, got {output_frame_shape[0]}"
-        assert output_frame_shape[1] == input_frame_shape[1] * 4, \
-            f"Width mismatch: expected {input_frame_shape[1] * 4}, got {output_frame_shape[1]}"
-        assert output_frame_shape[2] == input_frame_shape[2], \
-            f"Channel mismatch: expected {input_frame_shape[2]}, got {output_frame_shape[2]}"
+        assert input_frame_count == output_frame_count and input_frame_shape == output_frame_shape, \
+            f"expected {input_frame_count} frames of {input_frame_shape}, " \
+            f"got {output_frame_count} frames of {output_frame_shape}"
 
         return output
 

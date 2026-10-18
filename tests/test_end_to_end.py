@@ -43,8 +43,8 @@ def test_model_forward():
     with torch.no_grad():
         output = model(inputs=input_tensor)
 
-    # Check output shape (should be 4x upsampled)
-    expected_shape = (batch_size, num_frames, 3, height * 4, width * 4)
+    # Output has the same size as the input
+    expected_shape = (batch_size, num_frames, 3, height, width)
     assert output.shape == expected_shape, f"Expected shape {expected_shape}, got {output.shape}"
 
     # Check output is not all zeros or NaN
@@ -80,8 +80,8 @@ def test_inference_with_numpy_images():
 
     # Check output
     assert len(output) == num_frames, f"Expected {num_frames} frames, got {len(output)}"
-    assert output[0].shape == (height * 4, width * 4, 3), \
-        f"Expected shape {(height * 4, width * 4, 3)}, got {output[0].shape}"
+    assert output[0].shape == (height, width, 3), \
+        f"Expected shape {(height, width, 3)}, got {output[0].shape}"
     assert output[0].dtype == np.uint8, f"Expected dtype uint8, got {output[0].dtype}"
 
     print(f"  ✓ Inference with numpy images works ({len(output)} frames processed)")
@@ -113,8 +113,8 @@ def test_inference_with_batching():
 
     # Check output
     assert len(output) == num_frames, f"Expected {num_frames} frames, got {len(output)}"
-    assert output[0].shape == (height * 4, width * 4, 3), \
-        f"Expected shape {(height * 4, width * 4, 3)}, got {output[0].shape}"
+    assert output[0].shape == (height, width, 3), \
+        f"Expected shape {(height, width, 3)}, got {output[0].shape}"
 
     print(f"  ✓ Batched inference works ({len(output)} frames processed in batches of 3)")
 
@@ -178,7 +178,7 @@ def test_different_input_sizes():
         output = inference(model, video, device)
 
         assert len(output) == 3, f"Expected 3 frames for size {height}x{width}"
-        assert output[0].shape == (height * 4, width * 4, 3), \
+        assert output[0].shape == (height, width, 3), \
             f"Unexpected output shape for input {height}x{width}"
 
     print(f"  ✓ Inference works with different input sizes ({len(test_sizes)} sizes tested)")
@@ -237,7 +237,8 @@ def test_second_order_deformable_alignment():
     channels = 64
 
     x = torch.randn(batch_size, channels, height, width)
-    extra_feat = torch.randn(batch_size, channels, height, width)
+    # conv_offset expects 3 * out_channels + 4 (two flows) channels
+    extra_feat = torch.randn(batch_size, 3 * channels, height, width)
     flow_1 = torch.randn(batch_size, 2, height, width)
     flow_2 = torch.randn(batch_size, 2, height, width)
 
@@ -282,8 +283,8 @@ def test_basicvsr_plusplus_net():
     with torch.no_grad():
         output = net(lqs)
 
-    # Check output shape (4x upsampled)
-    expected_shape = (batch_size, num_frames, 3, height * 4, width * 4)
+    # Output has the same size as the input
+    expected_shape = (batch_size, num_frames, 3, height, width)
     assert output.shape == expected_shape, f"Expected shape {expected_shape}, got {output.shape}"
 
     # Check output is valid
