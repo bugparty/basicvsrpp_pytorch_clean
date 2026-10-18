@@ -9,8 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -42,33 +40,14 @@ jobs:
       run: |
         python tests/test_end_to_end.py
 
-    # Bootstrap only: once tests/golden/ is committed this is skipped, so a refactor
-    # can never silently regenerate its own reference.
-    - name: Generate golden data (only if missing)
-      id: golden_gen
-      if: matrix.python-version == '3.11' && hashFiles('tests/golden/golden.npz') == ''
-      run: |
-        python tests/generate_golden.py
-
-    - name: Upload generated golden data
-      if: steps.golden_gen.outcome == 'success'
-      uses: actions/upload-artifact@v4
-      with:
-        name: golden-data
-        path: tests/golden/
-
-    - name: Commit generated golden data (temporary bootstrap)
-      if: steps.golden_gen.outcome == 'success' && github.event_name == 'push'
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add tests/golden
-        git commit -m "Add golden regression data generated at ${GITHUB_SHA}"
-        git push origin "HEAD:${GITHUB_REF_NAME}"
-
     - name: Test golden regression
       run: |
         python tests/test_golden.py
+
+    - name: Check golden set catches typical refactor mistakes (one-off)
+      if: matrix.python-version == '3.11'
+      run: |
+        python tests/check_golden_sensitivity.py
 
     - name: Check code syntax
       run: |
