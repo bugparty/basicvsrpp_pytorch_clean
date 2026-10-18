@@ -1,10 +1,7 @@
-# Core dependencies
-torch>=2.0.0
-torchvision>=0.15.0
-numpy>=1.24.0
-opencv-python>=4.8.0
+# Core / inference dependencies
+-r requirements-inference.txt
 
-# MMEngine (轻量级的训练框架，比 mmcv 简单很多)
+# MMEngine (训练需要；推理不需要)
 mmengine>=0.10.0
 
 # Image and video processing

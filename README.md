@@ -46,7 +46,8 @@ result = inference(model, video, device="cuda:0")
 
 ## Dependencies
 
-Basic PyTorch dependencies, see `requirements.txt` for details
+- Inference only (`basicvsrpp.inference`): `pip install -r requirements-inference.txt` (torch, torchvision, numpy, opencv; no mmengine)
+- Training: `pip install -r requirements.txt` (adds mmengine and data-processing packages)
 
 ## License
 
