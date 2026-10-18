@@ -88,7 +88,7 @@ def load_model(
         KeyError: If the checkpoint has no weights for the generator used at inference.
         RuntimeError: If the generator weights do not match the network.
     """
-    if device and isinstance(device, str):
+    if isinstance(device, str):
         device = torch.device(device)
 
     if isinstance(config, str):
@@ -137,7 +137,7 @@ def inference(
     input_frame_count = len(video)
     input_frame_shape = video[0].shape
 
-    if device and isinstance(device, str):
+    if isinstance(device, str):
         device = torch.device(device)
 
     with torch.no_grad():

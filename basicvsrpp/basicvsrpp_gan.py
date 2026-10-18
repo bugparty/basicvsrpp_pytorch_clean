@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 from torch import Tensor
 
@@ -47,15 +47,15 @@ class BasicVSRPlusPlusGan(RealBasicVSR):
     def __init__(
         self,
         generator: dict,
-        discriminator: dict = None,
-        gan_loss: dict = None,
-        pixel_loss: dict = None,
-        perceptual_loss: dict = None,
+        discriminator: Optional[dict] = None,
+        gan_loss: Optional[dict] = None,
+        pixel_loss: Optional[dict] = None,
+        perceptual_loss: Optional[dict] = None,
         is_use_ema: bool = False,
-        train_cfg: dict = None,
-        test_cfg: dict = None,
-        init_cfg: dict = None,
-        data_preprocessor: dict = None
+        train_cfg: Optional[dict] = None,
+        test_cfg: Optional[dict] = None,
+        init_cfg: Optional[dict] = None,
+        data_preprocessor: Optional[dict] = None
     ) -> None:
         super().__init__(
             generator=generator,

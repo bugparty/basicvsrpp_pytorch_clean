@@ -146,7 +146,7 @@ def test_inference_consistency():
     output2 = inference(model, video, device)
 
     # Check that outputs are identical
-    for i, (frame1, frame2) in enumerate(zip(output1, output2)):
+    for i, (frame1, frame2) in enumerate(zip(output1, output2, strict=True)):
         assert np.array_equal(frame1, frame2), \
             f"Frame {i} differs between runs (should be deterministic)"
 
