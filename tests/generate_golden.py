@@ -30,6 +30,8 @@ from basicvsrpp.mmagic.basicvsr_plusplus_net import (BasicVSRPlusPlusNet, SPyNet
                                                      SecondOrderDeformableAlignment)
 from basicvsrpp.mmagic.registry import MODELS
 
+TARGET_RESIDUAL_RMS = 0.08  # in [0, 1] image units, about 20 grey levels
+
 
 def git_commit() -> str:
     try:
@@ -61,10 +63,22 @@ def main() -> int:
                        for k, v in full_sd.items()],
     }
     buffers = {e['key']: full_sd[e['key']].numpy() for e in manifest['state_dict'] if e['kind'] == 'buffer'}
+    manifest['weight_rule'] = {'res_gain': 0.1, 'out_gain': 1.0}
+    sd = gu.build_state_dict(manifest, buffers)
+
+    video = gu.synthetic_video()
+    lqs = gu.net_input(video)
+    with torch.no_grad():
+        net = BasicVSRPlusPlusNet(mid_channels=64, num_blocks=15, max_residue_magnitude=10,
+                                  spynet_pretrained=None)
+        net.load_state_dict(gu.sub_state_dict(sd, 'generator.'), strict=True)
+        net.eval()
+        resid_rms = (net(lqs) - lqs).pow(2).mean().sqrt().item()
+    assert np.isfinite(resid_rms) and resid_rms > 0, f'bad calibration residual rms {resid_rms}'
+    manifest['weight_rule']['out_gain'] = float(f'{TARGET_RESIDUAL_RMS / resid_rms:.3g}')
     sd = gu.build_state_dict(manifest, buffers)
 
     golden = {f'buffer.{k}': v for k, v in buffers.items()}
-    video = gu.synthetic_video()
     golden['input.video'] = video
 
     with torch.no_grad():
@@ -87,7 +101,6 @@ def main() -> int:
                                   spynet_pretrained=None)
         net.load_state_dict(gu.sub_state_dict(sd, 'generator.'), strict=True)
         net.eval()
-        lqs = gu.net_input(video)
         net_out = net(lqs).numpy()
         put(golden, 'net.out', gu.summarize(net_out, (3, 4), 4))
 
@@ -102,18 +115,28 @@ def main() -> int:
     put(golden, 'infer.full', gu.summarize(out_full, (1, 2), 2))
     put(golden, 'infer.chunk', gu.summarize(out_chunk, (1, 2), 4))
 
+    # The CI log is not always visible, so refuse to write a reference that cannot discriminate.
+    resid = net_out - lqs.numpy()
+    assert np.isfinite(net_out).all(), 'non-finite network output'
+    rms = np.sqrt(np.mean(resid ** 2))
+    assert 0.04 < rms < 0.16 and resid.std() > 0.02, f'net residual rms={rms:.4f} std={resid.std():.4f} outside target range'
+    for out in (out_full, out_chunk):
+        sat = np.mean((out == 0) | (out == 255))
+        diff = np.abs(out.astype(int) - video.astype(int)).mean()
+        assert sat < 0.1 and 3 < diff < 60, f'inference output not discriminative: saturated={sat:.3f} diff={diff:.2f}'
+
     os.makedirs(gu.GOLDEN_DIR, exist_ok=True)
     np.savez_compressed(gu.DATA_PATH, **golden)
     with open(gu.MANIFEST_PATH, 'w') as f:
         json.dump(manifest, f, indent=1)
         f.write('\n')
 
-    resid = net_out - lqs.numpy()
+    print(f'weight rule: {manifest["weight_rule"]}')
     print(f'baseline commit: {manifest["baseline_commit"]}')
     print(f'state_dict entries: {len(manifest["state_dict"])} ({len(buffers)} buffers)')
     print(f'spynet flow: mean|.|={np.abs(golden["spynet.flow"]).mean():.4f} max={np.abs(golden["spynet.flow"]).max():.4f}')
     print(f'align out: std={golden["align.out"].std():.4f}')
-    print(f'net residual (out - in): std={resid.std():.4f} max|.|={np.abs(resid).max():.4f}')
+    print(f'net residual (out - in): rms={rms:.4f} std={resid.std():.4f} max|.|={np.abs(resid).max():.4f}')
     for name, out in (('full', out_full), ('chunk', out_chunk)):
         sat = np.mean((out == 0) | (out == 255))
         diff = np.abs(out.astype(int) - video.astype(int)).mean()

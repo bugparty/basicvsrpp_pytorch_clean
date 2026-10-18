@@ -24,7 +24,17 @@ ALIGN_SIZE = 16
 CHUNK_FRAMES = 3
 
 
-def deterministic_param(key: str, shape) -> torch.Tensor:
+def param_gain(key: str, rule: dict) -> float:
+    # Near-identity residual blocks keep the 15-block stacks from blowing up;
+    # conv_last directly scales the output residual (output = conv_last(h) + input).
+    if key.endswith(('.conv2.weight', '.conv2.bias')):
+        return rule['res_gain']
+    if key.endswith(('conv_last.weight', 'conv_last.bias')):
+        return rule['out_gain']
+    return 1.0
+
+
+def deterministic_param(key: str, shape, gain: float = 1.0) -> torch.Tensor:
     rs = np.random.RandomState((WEIGHT_SEED + zlib.crc32(key.encode())) % 2**32)
     shape = tuple(shape)
     if len(shape) >= 2:
@@ -32,15 +42,16 @@ def deterministic_param(key: str, shape) -> torch.Tensor:
         arr = rs.normal(0.0, 1.0 / np.sqrt(fan_in), size=shape)
     else:
         arr = rs.uniform(-0.05, 0.05, size=shape)
-    return torch.from_numpy(arr.astype(np.float32))
+    return torch.from_numpy((arr * gain).astype(np.float32))
 
 
 def build_state_dict(manifest: dict, buffers: dict) -> dict:
+    rule = manifest['weight_rule']
     sd = {}
     for entry in manifest['state_dict']:
         key = entry['key']
         if entry['kind'] == 'param':
-            sd[key] = deterministic_param(key, entry['shape'])
+            sd[key] = deterministic_param(key, entry['shape'], param_gain(key, rule))
         else:
             sd[key] = torch.from_numpy(np.array(buffers[key]))
     return sd
