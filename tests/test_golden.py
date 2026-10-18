@@ -17,7 +17,7 @@ import torch
 
 import golden_utils as gu
 from basicvsrpp.inference import get_default_gan_inference_config, inference, load_model
-from basicvsrpp.mmagic.basicvsr_plusplus_net import (BasicVSRPlusPlusNet, SPyNet,
+from basicvsrpp.models.basicvsr_plusplus_net import (BasicVSRPlusPlusNet, SPyNet,
                                                      SecondOrderDeformableAlignment)
 
 FLOAT_TOL = dict(rtol=1e-4, atol=1e-4)

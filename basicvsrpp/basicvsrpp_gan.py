@@ -3,39 +3,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Union, Tuple
+from typing import Any, Tuple
 
 from torch import Tensor
 
 from basicvsrpp.mmagic.registry import MODELS
-from basicvsrpp.mmagic.basicvsr_plusplus_net import BasicVSRPlusPlusNet
 from basicvsrpp.mmagic.real_basicvsr import RealBasicVSR
+from basicvsrpp.models.basicvsr_plusplus_net import BasicVSRPlusPlusGanNet
 
+MODELS.register_module(module=BasicVSRPlusPlusGanNet)
 
-@MODELS.register_module()
-class BasicVSRPlusPlusGanNet(BasicVSRPlusPlusNet):
-    """BasicVSR++ GAN Network variant with frozen SPyNet."""
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        self.spynet.requires_grad_(False)
-
-    def forward(self, lqs: Tensor, return_lqs: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        """Forward function for BasicVSR++ GAN.
-
-        Args:
-            lqs: Input low quality (LQ) sequence with shape (n, t, c, h, w).
-            return_lqs: Whether to return LQ sequence. Default: False.
-
-        Returns:
-            Output HR sequence, or tuple of (HR sequence, LQ sequence) if return_lqs is True.
-        """
-        outputs = super().forward(lqs)
-
-        if return_lqs:
-            return outputs, lqs
-        else:
-            return outputs
 
 @MODELS.register_module()
 class BasicVSRPlusPlusGan(RealBasicVSR):
