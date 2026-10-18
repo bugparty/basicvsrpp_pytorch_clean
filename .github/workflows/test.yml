@@ -9,7 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11"]
 
@@ -53,6 +56,15 @@ jobs:
       with:
         name: golden-data
         path: tests/golden/
+
+    - name: Commit generated golden data (temporary bootstrap)
+      if: steps.golden_gen.outcome == 'success' && github.event_name == 'push'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add tests/golden
+        git commit -m "Add golden regression data generated at ${GITHUB_SHA}"
+        git push origin "HEAD:${GITHUB_REF_NAME}"
 
     - name: Test golden regression
       run: |
